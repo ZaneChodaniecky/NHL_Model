@@ -230,7 +230,7 @@ def transform_data(fileName):
     today = datetime.today().strftime('%#m/%#d/%Y')  
     df_schedule_today = df_schedule.query(f"DATE == '{today}'") 
     
-   #current_slate = list(zip(df_schedule_today['AWAY'],df_schedule_today['HOME']))
+    current_slate = list(zip(df_schedule_today['AWAY'],df_schedule_today['HOME']))
 
 
 
@@ -312,6 +312,7 @@ def transform_data(fileName):
                           'penaltiesForAvg_Home','penaltiesAgainstAvg_Away','penaltiesAgainstAvg_Home','penaltiesForAvg_Away'
                           ]
     
+    
     df_train_data = df_merged.drop(columns= discard_fields_train, axis=1)
     
     df_train_data.to_csv('NHL_Data_Transformed.csv',index=False)
@@ -322,7 +323,7 @@ def transform_data(fileName):
                      #'giveawaysForAvg_Home', 'giveawaysForAvg_Away',      
                      #'faceOffsWonPctAvg_Home','faceOffsWonPctAvg_Away',
                      'gameDate_Home','gameDate_Away',                  
-                     'penaltiesForAvg_Away','penaltiesForAvg_Home','penaltiesAgainstAvg_Away','penaltiesAgainstAvg_Home'
+                     'penaltiesForAvg_Home','penaltiesForAvg_Away','penaltiesAgainstAvg_Home','penaltiesAgainstAvg_Away'
                      ]
     
     df_predict_data = df_merged4.drop(columns= discard_fields_predict, axis=1)
