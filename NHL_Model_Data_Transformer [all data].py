@@ -22,7 +22,8 @@ def transform_data(fileName):
 
 
     # Define constants
-    AVERAGE_GAMES = 6 # Number of games used in moving average
+    AVERAGE_GAMES = 5 # Number of games used in moving average
+    # 6 games has provided the best results so far
     
     if socket.gethostname() == 'zchodani-p-l01':
         file_directory = r"C:\Users\zchodaniecky\OneDrive - Franklin Templeton\Documents\Python\NHL_data"
@@ -36,7 +37,7 @@ def transform_data(fileName):
     
         # Filter for columns that we want
     keep_columns = ['team','season','gameId','playoffGame','opposingTeam','home_or_away','gameDate','situation',
-                   'xGoalsPercentage','corsiPercentage','fenwickPercentage','iceTime','xOnGoalFor','xGoalsFor',
+                   'xGoalsPercentage','corsiPercentage','fenwickPercentage','xOnGoalFor','xGoalsFor',
                    'xReboundsFor','xFreezeFor','xPlayStoppedFor','xPlayContinuedInZoneFor','xPlayContinuedOutsideZoneFor',
                    'flurryAdjustedxGoalsFor','scoreVenueAdjustedxGoalsFor','flurryScoreVenueAdjustedxGoalsFor',
                    'shotsOnGoalFor','missedShotsFor','blockedShotAttemptsFor','shotAttemptsFor','goalsFor','reboundsFor',
@@ -105,32 +106,33 @@ def transform_data(fileName):
         
         
     # These are the columns that will be used to calculate their moving averages then dropped after
-    customize_columns = ['xGoalsPercentage','corsiPercentage','fenwickPercentage','iceTime','xOnGoalFor','xGoalsFor',
-                   'xReboundsFor','xFreezeFor','xPlayStoppedFor','xPlayContinuedInZoneFor','xPlayContinuedOutsideZoneFor',
-                   'flurryAdjustedxGoalsFor','scoreVenueAdjustedxGoalsFor','flurryScoreVenueAdjustedxGoalsFor',
-                   'shotsOnGoalFor','missedShotsFor','blockedShotAttemptsFor','shotAttemptsFor','goalsFor','reboundsFor',
-                   'reboundGoalsFor','freezeFor','playStoppedFor','playContinuedInZoneFor','playContinuedOutsideZoneFor',
-                   'savedShotsOnGoalFor','savedUnblockedShotAttemptsFor','penaltiesFor','penalityMinutesFor',
-                   'faceOffsWonFor','hitsFor','takeawaysFor','giveawaysFor','lowDangerShotsFor','mediumDangerShotsFor',
-                   'highDangerShotsFor','lowDangerxGoalsFor','mediumDangerxGoalsFor','highDangerxGoalsFor',
-                   'lowDangerGoalsFor','mediumDangerGoalsFor','highDangerGoalsFor','scoreAdjustedShotsAttemptsFor',
-                   'unblockedShotAttemptsFor','scoreAdjustedUnblockedShotAttemptsFor','dZoneGiveawaysFor',
-                   'xGoalsFromxReboundsOfShotsFor','xGoalsFromActualReboundsOfShotsFor','reboundxGoalsFor',
-                   'totalShotCreditFor','scoreAdjustedTotalShotCreditFor','scoreFlurryAdjustedTotalShotCreditFor',
-                   'xOnGoalAgainst','xGoalsAgainst','xReboundsAgainst','xFreezeAgainst','xPlayStoppedAgainst',
-                   'xPlayContinuedInZoneAgainst','xPlayContinuedOutsideZoneAgainst','flurryAdjustedxGoalsAgainst',
-                   'scoreVenueAdjustedxGoalsAgainst','flurryScoreVenueAdjustedxGoalsAgainst','shotsOnGoalAgainst',
-                   'missedShotsAgainst','blockedShotAttemptsAgainst','shotAttemptsAgainst','goalsAgainst','reboundsAgainst',
-                   'reboundGoalsAgainst','freezeAgainst','playStoppedAgainst','playContinuedInZoneAgainst',
-                   'playContinuedOutsideZoneAgainst','savedShotsOnGoalAgainst','savedUnblockedShotAttemptsAgainst',
-                   'penaltiesAgainst','penalityMinutesAgainst','faceOffsWonAgainst','hitsAgainst','takeawaysAgainst',
-                   'giveawaysAgainst','lowDangerShotsAgainst','mediumDangerShotsAgainst','highDangerShotsAgainst',
-                   'lowDangerxGoalsAgainst','mediumDangerxGoalsAgainst','highDangerxGoalsAgainst','lowDangerGoalsAgainst',
-                   'mediumDangerGoalsAgainst','highDangerGoalsAgainst','scoreAdjustedShotsAttemptsAgainst',
-                   'unblockedShotAttemptsAgainst','scoreAdjustedUnblockedShotAttemptsAgainst','dZoneGiveawaysAgainst',
-                   'xGoalsFromxReboundsOfShotsAgainst','xGoalsFromActualReboundsOfShotsAgainst','reboundxGoalsAgainst',
-                   'totalShotCreditAgainst','scoreAdjustedTotalShotCreditAgainst','scoreFlurryAdjustedTotalShotCreditAgainst'
-                ]
+    customize_columns = ['pointsFromGame',
+                         'xGoalsPercentage','corsiPercentage','fenwickPercentage','xOnGoalFor','xGoalsFor',
+                         'xReboundsFor','xFreezeFor','xPlayStoppedFor','xPlayContinuedInZoneFor','xPlayContinuedOutsideZoneFor',
+                         'flurryAdjustedxGoalsFor','scoreVenueAdjustedxGoalsFor','flurryScoreVenueAdjustedxGoalsFor',
+                         'shotsOnGoalFor','missedShotsFor','blockedShotAttemptsFor','shotAttemptsFor','goalsFor','reboundsFor',
+                         'reboundGoalsFor','freezeFor','playStoppedFor','playContinuedInZoneFor','playContinuedOutsideZoneFor',
+                         'savedShotsOnGoalFor','savedUnblockedShotAttemptsFor','penaltiesFor','penalityMinutesFor',
+                         'faceOffsWonFor','hitsFor','takeawaysFor','giveawaysFor','lowDangerShotsFor','mediumDangerShotsFor',
+                         'highDangerShotsFor','lowDangerxGoalsFor','mediumDangerxGoalsFor','highDangerxGoalsFor',
+                         'lowDangerGoalsFor','mediumDangerGoalsFor','highDangerGoalsFor','scoreAdjustedShotsAttemptsFor',
+                         'unblockedShotAttemptsFor','scoreAdjustedUnblockedShotAttemptsFor','dZoneGiveawaysFor',
+                         'xGoalsFromxReboundsOfShotsFor','xGoalsFromActualReboundsOfShotsFor','reboundxGoalsFor',
+                         'totalShotCreditFor','scoreAdjustedTotalShotCreditFor','scoreFlurryAdjustedTotalShotCreditFor',
+                         'xOnGoalAgainst','xGoalsAgainst','xReboundsAgainst','xFreezeAgainst','xPlayStoppedAgainst',
+                         'xPlayContinuedInZoneAgainst','xPlayContinuedOutsideZoneAgainst','flurryAdjustedxGoalsAgainst',
+                         'scoreVenueAdjustedxGoalsAgainst','flurryScoreVenueAdjustedxGoalsAgainst','shotsOnGoalAgainst',
+                         'missedShotsAgainst','blockedShotAttemptsAgainst','shotAttemptsAgainst','goalsAgainst','reboundsAgainst',
+                         'reboundGoalsAgainst','freezeAgainst','playStoppedAgainst','playContinuedInZoneAgainst',
+                         'playContinuedOutsideZoneAgainst','savedShotsOnGoalAgainst','savedUnblockedShotAttemptsAgainst',
+                         'penaltiesAgainst','penalityMinutesAgainst','faceOffsWonAgainst','hitsAgainst','takeawaysAgainst',
+                         'giveawaysAgainst','lowDangerShotsAgainst','mediumDangerShotsAgainst','highDangerShotsAgainst',
+                         'lowDangerxGoalsAgainst','mediumDangerxGoalsAgainst','highDangerxGoalsAgainst','lowDangerGoalsAgainst',
+                         'mediumDangerGoalsAgainst','highDangerGoalsAgainst','scoreAdjustedShotsAttemptsAgainst',
+                         'unblockedShotAttemptsAgainst','scoreAdjustedUnblockedShotAttemptsAgainst','dZoneGiveawaysAgainst',
+                         'xGoalsFromxReboundsOfShotsAgainst','xGoalsFromActualReboundsOfShotsAgainst','reboundxGoalsAgainst',
+                         'totalShotCreditAgainst','scoreAdjustedTotalShotCreditAgainst','scoreFlurryAdjustedTotalShotCreditAgainst'
+                         ]
     
     
     # Create the Average columns and create list for the Prediction sheet
@@ -292,7 +294,7 @@ def transform_data(fileName):
     
     df_train_data = df_merged.drop(columns= discard_fields_train, axis=1)
     
-    df_train_data.to_csv('NHL_Data_Transformed.csv',index=False)
+    df_train_data.to_csv('NHL_Data_All_Transformed.csv',index=False)
     
     # Discared un-needed fields from Prediction data dataframe
     discard_fields_predict = [
@@ -301,7 +303,7 @@ def transform_data(fileName):
     
     df_predict_data = df_merged4.drop(columns= discard_fields_predict, axis=1)
     
-    df_predict_data.to_csv('NHL_Data_all_Predict.csv',index=False)
+    df_predict_data.to_csv('NHL_Data_All_Predict.csv',index=False)
 
     
 
