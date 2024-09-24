@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Sep 17 13:44:21 2024
+Created on Fri Sep 20 11:38:27 2024
 
-@author: ZCHODANIECKY
+@author: ZaneC
 """
 
 import sys
@@ -36,31 +36,30 @@ def transform_data(fileName):
     df_original = pd.read_csv('all_teams.csv')
     
         # Filter for columns that we want
-    keep_columns = ['team','season','gameId','playoffGame','opposingTeam','home_or_away','gameDate','situation',
+    keep_columns = ['team','season','gameId','playoffGame','opposingTeam','home_or_away','gameDate','situation','goalsFor','goalsAgainst', #First line fields are always needed
                    'xGoalsPercentage','corsiPercentage','fenwickPercentage','xOnGoalFor','xGoalsFor',
                    'xReboundsFor','xFreezeFor','xPlayStoppedFor','xPlayContinuedInZoneFor','xPlayContinuedOutsideZoneFor',
                    'flurryAdjustedxGoalsFor','scoreVenueAdjustedxGoalsFor','flurryScoreVenueAdjustedxGoalsFor',
-                   'shotsOnGoalFor','missedShotsFor','blockedShotAttemptsFor','shotAttemptsFor','goalsFor','reboundsFor',
-                   'reboundGoalsFor','freezeFor','playStoppedFor','playContinuedInZoneFor','playContinuedOutsideZoneFor',
-                   'savedShotsOnGoalFor','savedUnblockedShotAttemptsFor','penaltiesFor','penalityMinutesFor',
-                   'faceOffsWonFor','hitsFor','takeawaysFor','giveawaysFor','lowDangerShotsFor','mediumDangerShotsFor',
-                   'highDangerShotsFor','lowDangerxGoalsFor','mediumDangerxGoalsFor','highDangerxGoalsFor',
-                   'lowDangerGoalsFor','mediumDangerGoalsFor','highDangerGoalsFor','scoreAdjustedShotsAttemptsFor',
-                   'unblockedShotAttemptsFor','scoreAdjustedUnblockedShotAttemptsFor','dZoneGiveawaysFor',
-                   'xGoalsFromxReboundsOfShotsFor','xGoalsFromActualReboundsOfShotsFor','reboundxGoalsFor',
+                   'shotsOnGoalFor','shotAttemptsFor',
+                   'playContinuedInZoneFor',
+                   'savedShotsOnGoalFor','savedUnblockedShotAttemptsFor',
+                   'lowDangerShotsFor','mediumDangerShotsFor',
+                   'lowDangerxGoalsFor','mediumDangerxGoalsFor',
+                   'scoreAdjustedShotsAttemptsFor',
+                   'unblockedShotAttemptsFor','scoreAdjustedUnblockedShotAttemptsFor',
+                   'xGoalsFromxReboundsOfShotsFor',
                    'totalShotCreditFor','scoreAdjustedTotalShotCreditFor','scoreFlurryAdjustedTotalShotCreditFor',
-                   'xOnGoalAgainst','xGoalsAgainst','xReboundsAgainst','xFreezeAgainst','xPlayStoppedAgainst',
+                   'xOnGoalAgainst','xGoalsAgainst','xReboundsAgainst','xPlayStoppedAgainst',
                    'xPlayContinuedInZoneAgainst','xPlayContinuedOutsideZoneAgainst','flurryAdjustedxGoalsAgainst',
                    'scoreVenueAdjustedxGoalsAgainst','flurryScoreVenueAdjustedxGoalsAgainst','shotsOnGoalAgainst',
-                   'missedShotsAgainst','blockedShotAttemptsAgainst','shotAttemptsAgainst','goalsAgainst','reboundsAgainst',
-                   'reboundGoalsAgainst','freezeAgainst','playStoppedAgainst','playContinuedInZoneAgainst',
-                   'playContinuedOutsideZoneAgainst','savedShotsOnGoalAgainst','savedUnblockedShotAttemptsAgainst',
-                   'penaltiesAgainst','penalityMinutesAgainst','faceOffsWonAgainst','hitsAgainst','takeawaysAgainst',
-                   'giveawaysAgainst','lowDangerShotsAgainst','mediumDangerShotsAgainst','highDangerShotsAgainst',
-                   'lowDangerxGoalsAgainst','mediumDangerxGoalsAgainst','highDangerxGoalsAgainst','lowDangerGoalsAgainst',
-                   'mediumDangerGoalsAgainst','highDangerGoalsAgainst','scoreAdjustedShotsAttemptsAgainst',
-                   'unblockedShotAttemptsAgainst','scoreAdjustedUnblockedShotAttemptsAgainst','dZoneGiveawaysAgainst',
-                   'xGoalsFromxReboundsOfShotsAgainst','xGoalsFromActualReboundsOfShotsAgainst','reboundxGoalsAgainst',
+                   'shotAttemptsAgainst',
+                   'freezeAgainst','playContinuedInZoneAgainst',
+                   'savedShotsOnGoalAgainst','savedUnblockedShotAttemptsAgainst',            
+                   'lowDangerShotsAgainst','mediumDangerShotsAgainst',
+                   'lowDangerxGoalsAgainst','mediumDangerxGoalsAgainst',
+                    'scoreAdjustedShotsAttemptsAgainst',
+                   'unblockedShotAttemptsAgainst','scoreAdjustedUnblockedShotAttemptsAgainst',
+                   'xGoalsFromxReboundsOfShotsAgainst',
                    'totalShotCreditAgainst','scoreAdjustedTotalShotCreditAgainst','scoreFlurryAdjustedTotalShotCreditAgainst'
                 ]
     
@@ -106,31 +105,30 @@ def transform_data(fileName):
         
         
     # These are the columns that will be used to calculate their moving averages then dropped after
-    customize_columns = ['pointsFromGame',
+    customize_columns = ['pointsFromGame','goalsFor','goalsAgainst', # First line fields are always needed
                          'xGoalsPercentage','corsiPercentage','fenwickPercentage','xOnGoalFor','xGoalsFor',
                          'xReboundsFor','xFreezeFor','xPlayStoppedFor','xPlayContinuedInZoneFor','xPlayContinuedOutsideZoneFor',
                          'flurryAdjustedxGoalsFor','scoreVenueAdjustedxGoalsFor','flurryScoreVenueAdjustedxGoalsFor',
-                         'shotsOnGoalFor','missedShotsFor','blockedShotAttemptsFor','shotAttemptsFor','goalsFor','reboundsFor',
-                         'reboundGoalsFor','freezeFor','playStoppedFor','playContinuedInZoneFor','playContinuedOutsideZoneFor',
-                         'savedShotsOnGoalFor','savedUnblockedShotAttemptsFor','penaltiesFor','penalityMinutesFor',
-                         'faceOffsWonFor','hitsFor','takeawaysFor','giveawaysFor','lowDangerShotsFor','mediumDangerShotsFor',
-                         'highDangerShotsFor','lowDangerxGoalsFor','mediumDangerxGoalsFor','highDangerxGoalsFor',
-                         'lowDangerGoalsFor','mediumDangerGoalsFor','highDangerGoalsFor','scoreAdjustedShotsAttemptsFor',
-                         'unblockedShotAttemptsFor','scoreAdjustedUnblockedShotAttemptsFor','dZoneGiveawaysFor',
-                         'xGoalsFromxReboundsOfShotsFor','xGoalsFromActualReboundsOfShotsFor','reboundxGoalsFor',
+                         'shotsOnGoalFor','shotAttemptsFor',
+                         'playContinuedInZoneFor',
+                         'savedShotsOnGoalFor','savedUnblockedShotAttemptsFor',
+                         'lowDangerShotsFor','mediumDangerShotsFor',
+                         'lowDangerxGoalsFor','mediumDangerxGoalsFor',
+                         'scoreAdjustedShotsAttemptsFor',
+                         'unblockedShotAttemptsFor','scoreAdjustedUnblockedShotAttemptsFor',
+                         'xGoalsFromxReboundsOfShotsFor',
                          'totalShotCreditFor','scoreAdjustedTotalShotCreditFor','scoreFlurryAdjustedTotalShotCreditFor',
-                         'xOnGoalAgainst','xGoalsAgainst','xReboundsAgainst','xFreezeAgainst','xPlayStoppedAgainst',
+                         'xOnGoalAgainst','xGoalsAgainst','xReboundsAgainst','xPlayStoppedAgainst',
                          'xPlayContinuedInZoneAgainst','xPlayContinuedOutsideZoneAgainst','flurryAdjustedxGoalsAgainst',
                          'scoreVenueAdjustedxGoalsAgainst','flurryScoreVenueAdjustedxGoalsAgainst','shotsOnGoalAgainst',
-                         'missedShotsAgainst','blockedShotAttemptsAgainst','shotAttemptsAgainst','goalsAgainst','reboundsAgainst',
-                         'reboundGoalsAgainst','freezeAgainst','playStoppedAgainst','playContinuedInZoneAgainst',
-                         'playContinuedOutsideZoneAgainst','savedShotsOnGoalAgainst','savedUnblockedShotAttemptsAgainst',
-                         'penaltiesAgainst','penalityMinutesAgainst','faceOffsWonAgainst','hitsAgainst','takeawaysAgainst',
-                         'giveawaysAgainst','lowDangerShotsAgainst','mediumDangerShotsAgainst','highDangerShotsAgainst',
-                         'lowDangerxGoalsAgainst','mediumDangerxGoalsAgainst','highDangerxGoalsAgainst','lowDangerGoalsAgainst',
-                         'mediumDangerGoalsAgainst','highDangerGoalsAgainst','scoreAdjustedShotsAttemptsAgainst',
-                         'unblockedShotAttemptsAgainst','scoreAdjustedUnblockedShotAttemptsAgainst','dZoneGiveawaysAgainst',
-                         'xGoalsFromxReboundsOfShotsAgainst','xGoalsFromActualReboundsOfShotsAgainst','reboundxGoalsAgainst',
+                         'shotAttemptsAgainst',
+                         'freezeAgainst','playContinuedInZoneAgainst',
+                         'savedShotsOnGoalAgainst','savedUnblockedShotAttemptsAgainst',            
+                         'lowDangerShotsAgainst','mediumDangerShotsAgainst',
+                         'lowDangerxGoalsAgainst','mediumDangerxGoalsAgainst',
+                          'scoreAdjustedShotsAttemptsAgainst',
+                         'unblockedShotAttemptsAgainst','scoreAdjustedUnblockedShotAttemptsAgainst',
+                         'xGoalsFromxReboundsOfShotsAgainst',
                          'totalShotCreditAgainst','scoreAdjustedTotalShotCreditAgainst','scoreFlurryAdjustedTotalShotCreditAgainst'
                          ]
     
@@ -294,7 +292,7 @@ def transform_data(fileName):
     
     df_train_data = df_merged.drop(columns= discard_fields_train, axis=1)
     
-    df_train_data.to_csv('NHL_Data_All_Transformed.csv',index=False)
+    df_train_data.to_csv('NHL_Data_09pct_Transformed.csv',index=False)
     
     # Discared un-needed fields from Prediction data dataframe
     discard_fields_predict = [
@@ -303,7 +301,7 @@ def transform_data(fileName):
     
     df_predict_data = df_merged4.drop(columns= discard_fields_predict, axis=1)
     
-    df_predict_data.to_csv('NHL_Data_All_Predict.csv',index=False)
+    df_predict_data.to_csv('NHL_Data_09pct_Predict.csv',index=False)
 
     
 

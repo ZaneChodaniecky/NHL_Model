@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Sep 17 13:44:21 2024
+Created on Fri Sep 20 19:30:22 2024
 
-@author: ZCHODANIECKY
+@author: ZaneC
 """
+
 
 import sys
 import pandas as pd
@@ -23,7 +24,6 @@ def transform_data(fileName):
 
     # Define constants
     AVERAGE_GAMES = 6 # Number of games used in moving average
-    # 6 games has provided the best results so far
     
     if socket.gethostname() == 'zchodani-p-l01':
         file_directory = r"C:\Users\zchodaniecky\OneDrive - Franklin Templeton\Documents\Python\NHL_data"
@@ -37,31 +37,25 @@ def transform_data(fileName):
     
         # Filter for columns that we want
     keep_columns = ['team','season','gameId','playoffGame','opposingTeam','home_or_away','gameDate','situation',
-                   'xGoalsPercentage','corsiPercentage','fenwickPercentage','xOnGoalFor','xGoalsFor',
-                   'xReboundsFor','xFreezeFor','xPlayStoppedFor','xPlayContinuedInZoneFor','xPlayContinuedOutsideZoneFor',
-                   'flurryAdjustedxGoalsFor','scoreVenueAdjustedxGoalsFor','flurryScoreVenueAdjustedxGoalsFor',
-                   'shotsOnGoalFor','missedShotsFor','blockedShotAttemptsFor','shotAttemptsFor','goalsFor','reboundsFor',
-                   'reboundGoalsFor','freezeFor','playStoppedFor','playContinuedInZoneFor','playContinuedOutsideZoneFor',
-                   'savedShotsOnGoalFor','savedUnblockedShotAttemptsFor','penaltiesFor','penalityMinutesFor',
-                   'faceOffsWonFor','hitsFor','takeawaysFor','giveawaysFor','lowDangerShotsFor','mediumDangerShotsFor',
-                   'highDangerShotsFor','lowDangerxGoalsFor','mediumDangerxGoalsFor','highDangerxGoalsFor',
-                   'lowDangerGoalsFor','mediumDangerGoalsFor','highDangerGoalsFor','scoreAdjustedShotsAttemptsFor',
-                   'unblockedShotAttemptsFor','scoreAdjustedUnblockedShotAttemptsFor','dZoneGiveawaysFor',
-                   'xGoalsFromxReboundsOfShotsFor','xGoalsFromActualReboundsOfShotsFor','reboundxGoalsFor',
-                   'totalShotCreditFor','scoreAdjustedTotalShotCreditFor','scoreFlurryAdjustedTotalShotCreditFor',
-                   'xOnGoalAgainst','xGoalsAgainst','xReboundsAgainst','xFreezeAgainst','xPlayStoppedAgainst',
-                   'xPlayContinuedInZoneAgainst','xPlayContinuedOutsideZoneAgainst','flurryAdjustedxGoalsAgainst',
-                   'scoreVenueAdjustedxGoalsAgainst','flurryScoreVenueAdjustedxGoalsAgainst','shotsOnGoalAgainst',
-                   'missedShotsAgainst','blockedShotAttemptsAgainst','shotAttemptsAgainst','goalsAgainst','reboundsAgainst',
-                   'reboundGoalsAgainst','freezeAgainst','playStoppedAgainst','playContinuedInZoneAgainst',
-                   'playContinuedOutsideZoneAgainst','savedShotsOnGoalAgainst','savedUnblockedShotAttemptsAgainst',
-                   'penaltiesAgainst','penalityMinutesAgainst','faceOffsWonAgainst','hitsAgainst','takeawaysAgainst',
-                   'giveawaysAgainst','lowDangerShotsAgainst','mediumDangerShotsAgainst','highDangerShotsAgainst',
-                   'lowDangerxGoalsAgainst','mediumDangerxGoalsAgainst','highDangerxGoalsAgainst','lowDangerGoalsAgainst',
-                   'mediumDangerGoalsAgainst','highDangerGoalsAgainst','scoreAdjustedShotsAttemptsAgainst',
-                   'unblockedShotAttemptsAgainst','scoreAdjustedUnblockedShotAttemptsAgainst','dZoneGiveawaysAgainst',
-                   'xGoalsFromxReboundsOfShotsAgainst','xGoalsFromActualReboundsOfShotsAgainst','reboundxGoalsAgainst',
-                   'totalShotCreditAgainst','scoreAdjustedTotalShotCreditAgainst','scoreFlurryAdjustedTotalShotCreditAgainst'
+                   'goalsFor',
+                   'penaltiesFor','penaltiesAgainst',
+                   'hitsFor','hitsAgainst',
+                   #'takeawaysFor','giveawaysFor',
+                   'goalsAgainst',
+                   #'faceOffsWonFor','faceOffsWonAgainst',         
+                   #'shotsOnGoalFor','shotsOnGoalAgainst',
+                   'savedShotsOnGoalFor','savedShotsOnGoalAgainst',                           
+                   #'corsiPercentage',
+                   #'xGoalsPercentage',
+                   'fenwickPercentage',
+                   #'missedShotsFor',
+                   #'blockedShotAttemptsFor',
+                   #'blockedShotAttemptsAgainst',
+                   'reboundsFor',
+                   #'mediumDangerShotsFor',
+                   #'highDangerShotsFor',
+                   #'dZoneGiveawaysFor',
+                   #'scoreFlurryAdjustedTotalShotCreditFor'
                 ]
     
     df_trimmed = df_original[keep_columns].copy()
@@ -73,32 +67,47 @@ def transform_data(fileName):
     
     # Create custom columns
     outcomeConditions = [
-        (df_trimmed['goalsFor'] > df_trimmed['goalsAgainst']),
-        (df_trimmed['goalsAgainst'] > df_trimmed['goalsFor']),
-        (df_trimmed['goalsAgainst'] == df_trimmed['goalsFor'])
+        (df_trimmed['goalsFor'] > df_trimmed['goalsAgainst']), # Win
+        (df_trimmed['goalsAgainst'] > df_trimmed['goalsFor']), # Loss
+        (df_trimmed['goalsAgainst'] == df_trimmed['goalsFor']) # Tie
         ]
     # Win and Loss do not count shootout, all shootouts are considered a tie
-    outcomeValues = ['WIN','LOSS','TIE']
+    outcomeValues = ['2','0','1']
     
     # Create custom columns
-    df_trimmed.loc[:,'win_or_lose'] = np.select(outcomeConditions,outcomeValues)
-    df_trimmed.loc[:,'win'] = np.where(df_trimmed['win_or_lose'] == 'WIN', 1, 0) 
+    df_trimmed.loc[:,'win_loss_tie'] = np.select(outcomeConditions,outcomeValues)
+    df_trimmed.loc[:,'win'] = np.where(df_trimmed['win_loss_tie'] == '2', 1, 0)
+    df_trimmed.loc[:,'loss'] = np.where(df_trimmed['win_loss_tie'] == '0', 1, 0)
+    df_trimmed.loc[:,'tie'] = np.where(df_trimmed['win_loss_tie'] == '1', 1, 0)
     df_trimmed.loc[:,'seasonWin'] = df_trimmed.groupby(['season','team'])['win'].cumsum(axis=0)
-    df_trimmed.loc[:,'tie'] = np.where(df_trimmed['win_or_lose'] == 'TIE', 1, 0)
+    df_trimmed.loc[:,'seasonLoss'] = df_trimmed.groupby(['season','team'])['loss'].cumsum(axis=0)
     df_trimmed.loc[:,'seasonTie'] = df_trimmed.groupby(['season','team'])['tie'].cumsum(axis=0)
-    df_trimmed.loc[:,'pointsFromGame'] = np.where(df_trimmed['win_or_lose'] == 'WIN', 2,(np.where(df_trimmed['win_or_lose'] == 'TIE', 1, 0)))
+    df_trimmed.loc[:,'pointsFromGame'] = np.where(df_trimmed['win_loss_tie'] == '2', 2,(np.where(df_trimmed['win_loss_tie'] == '1', 1, 0)))
     df_trimmed.loc[:,'seasonPointTotal'] = (df_trimmed['seasonWin'] * 2) + (df_trimmed['seasonTie'])
     df_trimmed.loc[:, 'gamesPlayed'] = df_trimmed.groupby(['season','team']).cumcount() +1
     
     
     # Create custom columns to get Averages for
-
+    #df_trimmed.loc[:,'shotsOnGoalDiff'] = df_trimmed['shotsOnGoalFor'] - df_trimmed['shotsOnGoalAgainst']
+    df_trimmed.loc[:,'goalDiff'] = df_trimmed['goalsFor'] - df_trimmed['goalsAgainst']
     df_trimmed.loc[:,'seasonPointsPerGame'] = df_trimmed['seasonPointTotal'] / df_trimmed['gamesPlayed']
+    #df_trimmed.loc[:,'faceOffsWonPct'] = df_trimmed['faceOffsWonFor'] / (df_trimmed['faceOffsWonFor'] + df_trimmed['faceOffsWonAgainst'])
+    df_trimmed.loc[:,'hitsDiff'] = df_trimmed['hitsFor'] - df_trimmed['hitsAgainst']# Current
+    #df_trimmed.loc[:,'SP_Total'] = np.where(df_trimmed['goalsFor'] == '0', 0, (df_trimmed['goalsFor'] / df_trimmed['shotsOnGoalFor']))
+    #df_trimmed.loc[:,'SV_Total'] = (df_trimmed['shotsOnGoalAgainst'] - df_trimmed['goalsAgainst']) / df_trimmed['savedShotsOnGoalAgainst']
+    #df_trimmed.loc[:,'PDO'] = df_trimmed['SP_Total'] + df_trimmed['SV_Total']
     
     # Drop columns not needed after intial filtering and transforming
-    drop_columns = ['playoffGame', 'win','seasonWin','tie','seasonTie','situation','season']
-    df_trimmed = df_trimmed.drop(columns=drop_columns)
-
+    df_trimmed = df_trimmed.drop(columns=['playoffGame','seasonWin','win','seasonTie','tie','seasonLoss','loss','situation','season',
+                                          #'faceOffsWonFor','faceOffsWonAgainst',
+                                          'goalsFor','goalsAgainst',
+                                          'hitsFor','hitsAgainst',
+                                          #'shotsOnGoalFor','shotsOnGoalAgainst',
+                                          'savedShotsOnGoalFor','savedShotsOnGoalAgainst',                                       
+                                          #'SP_Total','SV_Total'
+                                          ])
+    
+        
     # Function: Average stat values for the prior {AVERAGE_GAMES} number of games. Shift to use prior game values.
     def calculate_avg_stats_per_game(df_use, used_col_name, moving_avg_len):   
         #df_use.loc[:, used_col_name + 'Avg'] = round(df_use.groupby('team')[used_col_name].transform(lambda x: x.rolling(AVERAGE_GAMES,1).mean(AVERAGE_GAMES).shift().bfill()), 2) #SMA
@@ -106,33 +115,27 @@ def transform_data(fileName):
         
         
     # These are the columns that will be used to calculate their moving averages then dropped after
-    customize_columns = ['pointsFromGame',
-                         'xGoalsPercentage','corsiPercentage','fenwickPercentage','xOnGoalFor','xGoalsFor',
-                         'xReboundsFor','xFreezeFor','xPlayStoppedFor','xPlayContinuedInZoneFor','xPlayContinuedOutsideZoneFor',
-                         'flurryAdjustedxGoalsFor','scoreVenueAdjustedxGoalsFor','flurryScoreVenueAdjustedxGoalsFor',
-                         'shotsOnGoalFor','missedShotsFor','blockedShotAttemptsFor','shotAttemptsFor','goalsFor','reboundsFor',
-                         'reboundGoalsFor','freezeFor','playStoppedFor','playContinuedInZoneFor','playContinuedOutsideZoneFor',
-                         'savedShotsOnGoalFor','savedUnblockedShotAttemptsFor','penaltiesFor','penalityMinutesFor',
-                         'faceOffsWonFor','hitsFor','takeawaysFor','giveawaysFor','lowDangerShotsFor','mediumDangerShotsFor',
-                         'highDangerShotsFor','lowDangerxGoalsFor','mediumDangerxGoalsFor','highDangerxGoalsFor',
-                         'lowDangerGoalsFor','mediumDangerGoalsFor','highDangerGoalsFor','scoreAdjustedShotsAttemptsFor',
-                         'unblockedShotAttemptsFor','scoreAdjustedUnblockedShotAttemptsFor','dZoneGiveawaysFor',
-                         'xGoalsFromxReboundsOfShotsFor','xGoalsFromActualReboundsOfShotsFor','reboundxGoalsFor',
-                         'totalShotCreditFor','scoreAdjustedTotalShotCreditFor','scoreFlurryAdjustedTotalShotCreditFor',
-                         'xOnGoalAgainst','xGoalsAgainst','xReboundsAgainst','xFreezeAgainst','xPlayStoppedAgainst',
-                         'xPlayContinuedInZoneAgainst','xPlayContinuedOutsideZoneAgainst','flurryAdjustedxGoalsAgainst',
-                         'scoreVenueAdjustedxGoalsAgainst','flurryScoreVenueAdjustedxGoalsAgainst','shotsOnGoalAgainst',
-                         'missedShotsAgainst','blockedShotAttemptsAgainst','shotAttemptsAgainst','goalsAgainst','reboundsAgainst',
-                         'reboundGoalsAgainst','freezeAgainst','playStoppedAgainst','playContinuedInZoneAgainst',
-                         'playContinuedOutsideZoneAgainst','savedShotsOnGoalAgainst','savedUnblockedShotAttemptsAgainst',
-                         'penaltiesAgainst','penalityMinutesAgainst','faceOffsWonAgainst','hitsAgainst','takeawaysAgainst',
-                         'giveawaysAgainst','lowDangerShotsAgainst','mediumDangerShotsAgainst','highDangerShotsAgainst',
-                         'lowDangerxGoalsAgainst','mediumDangerxGoalsAgainst','highDangerxGoalsAgainst','lowDangerGoalsAgainst',
-                         'mediumDangerGoalsAgainst','highDangerGoalsAgainst','scoreAdjustedShotsAttemptsAgainst',
-                         'unblockedShotAttemptsAgainst','scoreAdjustedUnblockedShotAttemptsAgainst','dZoneGiveawaysAgainst',
-                         'xGoalsFromxReboundsOfShotsAgainst','xGoalsFromActualReboundsOfShotsAgainst','reboundxGoalsAgainst',
-                         'totalShotCreditAgainst','scoreAdjustedTotalShotCreditAgainst','scoreFlurryAdjustedTotalShotCreditAgainst'
-                         ]
+    customize_columns = [#'corsiPercentage',
+                   'penaltiesFor','penaltiesAgainst',
+                   #'takeawaysFor',
+                   #'giveawaysFor',      
+                   'goalDiff',
+                   #'faceOffsWonPct',
+                   'hitsDiff',
+                   #'shotsOnGoalDiff', 
+                   'pointsFromGame',
+                   #'xGoalsPercentage',
+                   #'PDO',
+                   'fenwickPercentage',
+                   #'missedShotsFor',
+                   #'blockedShotAttemptsFor',
+                   #'blockedShotAttemptsAgainst',
+                   'reboundsFor',
+                   #'mediumDangerShotsFor',
+                   #'highDangerShotsFor',
+                   #'dZoneGiveawaysFor',
+                   #'scoreFlurryAdjustedTotalShotCreditFor'
+                   ]
     
     
     # Create the Average columns and create list for the Prediction sheet
@@ -142,13 +145,10 @@ def transform_data(fileName):
         new_col_list.append(item + 'Avg')
         
     # Filter out Ties and early season games less than moving average
-    df_trimmed = df_trimmed.query("win_or_lose != 'TIE' & gamesPlayed > @AVERAGE_GAMES")
+    df_trimmed = df_trimmed.query("gamesPlayed > @AVERAGE_GAMES")
     
     # Remove columns not needed after filtering
     df_trimmed = df_trimmed.drop(columns=['seasonPointTotal','gamesPlayed'])
-    
-    # Convert win_or_lose column to binary
-    df_trimmed.loc[:,'win_or_lose'] = np.where(df_trimmed['win_or_lose'] == 'WIN', 1, 0) # Replace withOneHotEncode
 
     
     df_most_recent_game = df_trimmed.groupby('team')['gameDate'].last() # Find the most recent game for each team
@@ -179,8 +179,16 @@ def transform_data(fileName):
         validate=None,
     )
     
-
     
+    df_merged.loc[:,'penaltiesForTotal'] = round(df_merged['penaltiesForAvg_Home'] + df_merged['penaltiesAgainstAvg_Away'],2) # Penalties served by Home team
+    df_merged.loc[:,'penaltiesAgainstTotal'] = round(df_merged['penaltiesAgainstAvg_Home'] + df_merged['penaltiesForAvg_Away'],2) # Power Play Home Team
+    #df_merged.loc[:,'turnoversFor'] = round(df_merged['takeawaysForAvg_Home'] + df_merged['giveawaysForAvg_Away'],2)  
+    #df_merged.loc[:,'turnoversAgainst'] = round(df_merged['giveawaysForAvg_Home'] + df_merged['takeawaysForAvg_Away'],2) 
+    #df_merged.loc[:,'faceOffsWonPctDiff'] = round((df_merged['faceOffsWonPctAvg_Home'] - df_merged['faceOffsWonPctAvg_Away'])*100,2)
+    
+    
+
+
     ### Create Input file to feed into model for current day games
     
     
@@ -286,24 +294,40 @@ def transform_data(fileName):
 
 
 
+    # Calculate some new fields
+    df_merged4.loc[:,'penaltiesForTotal'] = round(df_merged4['penaltiesForAvg_Home'] + df_merged4['penaltiesAgainstAvg_Away'],2)     
+    df_merged4.loc[:,'penaltiesAgainstTotal'] = round(df_merged4['penaltiesAgainstAvg_Home'] + df_merged4['penaltiesForAvg_Away'],2)   
+    #df_merged4.loc[:,'turnoversFor'] = round(df_merged4['takeawaysForAvg_Home'] + df_merged4['giveawaysForAvg_Away'],2)  
+    #df_merged4.loc[:,'turnoversAgainst'] = round(df_merged4['giveawaysForAvg_Home'] + df_merged4['takeawaysForAvg_Away'],2) 
+    #df_merged4.loc[:,'faceOffsWonPctDiff'] = round((df_merged4['faceOffsWonPctAvg_Home'] - df_merged4['faceOffsWonPctAvg_Away'])*100,2)
+
+
     # Discard un-needed fields from training data dataframe
     discard_fields_train = ['opposingTeam_Home','opposingTeam_Away',
-                          'gameDate_Home','gameDate_Away'
+                          #'takeawaysForAvg_Home','takeawaysForAvg_Away',
+                          #'giveawaysForAvg_Away','giveawaysForAvg_Home',
+                          #'faceOffsWonPctAvg_Home','faceOffsWonPctAvg_Away',
+                          'gameDate_Home','gameDate_Away',             
+                          'penaltiesForAvg_Home','penaltiesAgainstAvg_Away','penaltiesAgainstAvg_Home','penaltiesForAvg_Away'
                           ]
     
     
     df_train_data = df_merged.drop(columns= discard_fields_train, axis=1)
     
-    df_train_data.to_csv('NHL_Data_All_Transformed.csv',index=False)
+    df_train_data.to_csv('NHL_Data_WLT_Transformed.csv',index=False)
     
     # Discared un-needed fields from Prediction data dataframe
     discard_fields_predict = [
+                     #'takeawaysForAvg_Home','takeawaysForAvg_Away',
+                     #'giveawaysForAvg_Home', 'giveawaysForAvg_Away',      
+                     #'faceOffsWonPctAvg_Home','faceOffsWonPctAvg_Away',
                      'gameDate_Home','gameDate_Away',                  
+                     'penaltiesForAvg_Home','penaltiesForAvg_Away','penaltiesAgainstAvg_Home','penaltiesAgainstAvg_Away'
                      ]
     
     df_predict_data = df_merged4.drop(columns= discard_fields_predict, axis=1)
     
-    df_predict_data.to_csv('NHL_Data_All_Predict.csv',index=False)
+    df_predict_data.to_csv('NHL_Data_WLT_Predict.csv',index=False)
 
     
 

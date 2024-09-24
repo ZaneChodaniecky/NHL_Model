@@ -230,7 +230,7 @@ def transform_data(fileName):
     today = datetime.today().strftime('%#m/%#d/%Y')  
     df_schedule_today = df_schedule.query(f"DATE == '{today}'") 
     
-    current_slate = list(zip(df_schedule_today['AWAY'],df_schedule_today['HOME']))
+    #current_slate = list(zip(df_schedule_today['AWAY'],df_schedule_today['HOME']))
 
 
 
