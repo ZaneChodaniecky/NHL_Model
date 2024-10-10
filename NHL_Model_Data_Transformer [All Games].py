@@ -14,6 +14,7 @@ import os
 import itertools
 import socket
 from datetime import datetime
+from Pull_Game_Outcomes import Update_Win_History
 
 
 def transform_data(fileName):
@@ -31,6 +32,10 @@ def transform_data(fileName):
         file_directory = r"C:\Users\zanec\OneDrive\Documents\Python\NHL_data"
              
     os.chdir(file_directory)
+    
+    
+    # Update win history file
+    Update_Win_History('Win_History.csv','all_teams.csv')
     
     
     df_original = pd.read_csv('all_teams.csv')
