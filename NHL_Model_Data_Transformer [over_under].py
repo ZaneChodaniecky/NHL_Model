@@ -221,8 +221,7 @@ def transform_data(fileName):
 
 
     ### Create Input file to feed into model for current day games
-    
-    
+      
     new_col_list.insert(0,'team')
     new_col_list.insert(1,'gameDate')
     new_col_list.insert(2, 'seasonPointsPerGame')
