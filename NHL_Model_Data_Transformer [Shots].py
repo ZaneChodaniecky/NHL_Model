@@ -33,8 +33,8 @@ def transform_data(fileName):
     
     
     # Combined shots history file pre-2024 with 2024 current data
-    df_shots_2015_2023 = pd.read_csv('shots_2015-2023.csv')    
-    df_shots_2024 = pd.read_csv('shots_2024.csv')
+    df_shots_history = pd.read_csv('shots_2015-2023.csv')    
+    df_shots_current_year = pd.read_csv('shots_2024.csv')
     
     
     
@@ -43,10 +43,10 @@ def transform_data(fileName):
                     'shooterPlayerId','shotWasOnGoal'
                     ]
     
-    df_shots_2015_2023 = df_shots_2015_2023[keep_columns].copy()
-    df_shots_2024 = df_shots_2024[keep_columns].copy()
+    df_shots_history = df_shots_history[keep_columns].copy()
+    df_shots_current_year = df_shots_current_year[keep_columns].copy()
     
-    df_Combined = pd.concat([df_shots_2015_2023,df_shots_2024], ignore_index=True)
+    df_Combined = pd.concat([df_shots_history,df_shots_current_year], ignore_index=True)
     
     # Concat fields to create full gameId
     df_Combined['fullGameId'] = df_Combined['season'].astype(str) + df_Combined['isPlayoffGame'].astype(str) + df_Combined['game_id'].astype(str)
@@ -55,7 +55,7 @@ def transform_data(fileName):
     
     df_filtered = df_Combined.query("isPlayoffGame == 0 & shotWasOnGoal == 1 & shooterPlayerId != 0 & shooterPlayerId.notna() & season >= 2018")
     
-    df_filtered.sort_values(by=['shooterPlayerId','fullGameId'], ascending= [True, True], inplace=True) # Sort by date so next step calcs correct
+    df_filtered.sort_values(by=['shooterPlayerId','fullGameId'], ascending= [True, True], inplace=True) 
     
 
     df_shot_counts = df_filtered.groupby(['fullGameId','shooterPlayerId']).size().reset_index(name='shotCount')
@@ -64,7 +64,7 @@ def transform_data(fileName):
     df_merged_1 = pd.merge(df_filtered,df_shot_counts, on=['fullGameId','shooterPlayerId'], how='left')
     
     
-    df_merged_1.drop_duplicates(subset=['fullGameId','shooterPlayerId'], keep='first', inplace=True) # Drop rows on dates that team did not play
+    df_merged_1.drop_duplicates(subset=['fullGameId','shooterPlayerId'], keep='first', inplace=True) 
     
     df_merged_1['teamCode'] = np.where(df_merged_1['team'] == 'HOME', df_merged_1['homeTeamCode'], df_merged_1['awayTeamCode'])
     
