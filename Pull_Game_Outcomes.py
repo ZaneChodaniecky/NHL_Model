@@ -81,6 +81,8 @@ def Update_Goalie_GAA(shotsHistoryPath,shotsCurrentYearPath):
 
     if socket.gethostname() == 'zchodani-p-l01':
         file_directory = r"C:\Users\zchodaniecky\OneDrive - Franklin Templeton\Documents\Python\NHL_data\Shots Model"
+    elif socket.gethostname() == 'FTILC3VBil7BwCe':
+        file_directory = r"C:\Users\zchodan\OneDrive - Franklin Templeton\Documents\Python\NHL_data\Shots Model"
     else:
         file_directory = r"C:\Users\zanec\OneDrive\Documents\Python\NHL_data\Shots Model"
              
@@ -92,36 +94,111 @@ def Update_Goalie_GAA(shotsHistoryPath,shotsCurrentYearPath):
     df_shots_history = pd.read_csv(shotsHistoryPath)
     df_shots_current_year = pd.read_csv(shotsCurrentYearPath)
     
-    
      
-        # Filter for columns that we want
+    # Filter for columns that we want
     keep_columns = ['season','isPlayoffGame','game_id','team','homeTeamCode','awayTeamCode','isHomeTeam','goalieIdForShot','goalieNameForShot',
                     'goal','shotWasOnGoal'
                     ]
     
-    df_shots_history = df_shots_history[keep_columns].copy()
-    df_shots_current_year = df_shots_current_year[keep_columns].copy()
+    # Clean up dataframe
+    df_shots_history = df_shots_history[keep_columns].copy()  
+    df_shots_history = df_shots_history.dropna(subset=['goalieIdForShot'])
+    df_shots_history['goalieIdForShot'] = df_shots_history['goalieIdForShot'].astype(str).str.replace('.0','',regex=False)
+    df_shots_history['isHomeTeam'] = df_shots_history['isHomeTeam'].astype(str).str.replace('.0','',regex=False)
+    
+    # Clean up datafram
+    df_shots_current_year = df_shots_current_year[keep_columns].copy() 
+    df_shots_current_year = df_shots_current_year.dropna(subset=['goalieIdForShot']) 
+    df_shots_current_year['goalieIdForShot'] = df_shots_current_year['goalieIdForShot'].astype(str).str.replace('.0','',regex=False)
+    df_shots_current_year['isHomeTeam'] = df_shots_current_year['isHomeTeam'].astype(str).str.replace('.0','',regex=False)
     
     df_Combined = pd.concat([df_shots_history,df_shots_current_year], ignore_index=True)
     
-    #SOME GOALS ARE EMPTY NET SO NO GOALIE ID. ALSO NOT SURE HOW SHOOTOUTS WORK. FIGURE THIS OUT FIRST
-    
-    #df_filtered = df_Combined.query("isPlayoffGame == 0 & shotWasOnGoal == 1 & shooterPlayerId != 0 & shooterPlayerId.notna() & season >= 2018")
-    
-    
-    # Concat fields to create full gameId
+    # Create fullGameId
     df_Combined['fullGameId'] = df_Combined['season'].astype(str) + df_Combined['isPlayoffGame'].astype(str) + df_Combined['game_id'].astype(str)
     
-    df_shots_current_year['fullGameId'] = df_shots_current_year['season'].astype(str) + df_shots_current_year['isPlayoffGame'].astype(str) + df_shots_current_year['game_id'].astype(str)
+    ##### CALCULATE GAA #####
     
-    # Group by 'game_id' and sum the 'goal' column to get total goals for each game
-    goals_per_game = df_shots_current_year.groupby(['fullGameId','goalieIdForShot'])['goal'].sum().reset_index()
+    # Remove playoffs and empty net goals since we're calculating GAA
+    df_filtered = df_Combined.query("isPlayoffGame == 0 & goalieIdForShot != '0' & goalieIdForShot.notna() & goal == 1 & season >= 2018")
+           
+    
+    # Group by 'game_id' and 'goalie_id' then sum the 'goal' column to get total goals for each game/goalie
+    df_goals_per_game = df_filtered.groupby(['fullGameId','goalieIdForShot','season','isHomeTeam'])['goal'].sum().reset_index()
     
     # Rename the column to make it clear that it's the total number of goals
-    goals_per_game.rename(columns={'goal': 'total_goals'}, inplace=True)
+    df_goals_per_game.rename(columns={'goal': 'totalGameGoals'}, inplace=True)
     
-    # Display the resulting dataframe
-    print(goals_per_game)
+      
+    # Step 1: Create a cumulative count of games for each goalie in each season
+    df_goals_per_game['cumulativeGames'] = (
+    df_goals_per_game
+    .groupby(['season', 'goalieIdForShot'])
+    .cumcount() + 1  # +1 to start count from 1 instead of 0
+    )
+
+    # Step 2: Calculate the rolling average with a variable window based on cumulative games
+    df_goals_per_game['goalieIdSeasonGAA'] = (
+    df_goals_per_game
+    .groupby(['season', 'goalieIdForShot'])
+    ['totalGameGoals']
+    .transform(lambda x: x.rolling(window=len(x), min_periods=1).mean())
+    )
+    
+    # Step 3: Calculate the rolling average with a variable window based on cumulative games
+    df_goals_per_game['goalieIdSeasonGAA'] = (
+    df_goals_per_game
+    .groupby(['season', 'goalieIdForShot'])
+    ['totalGameGoals']
+    .transform(lambda x: x.rolling(window=len(x), min_periods=1).mean())
+    )
+    
+    
+    ##### CALCULATE SV% #####
+    
+    # Using goals table, Create a cumulative count of games for each goalie in each season
+    df_goals_per_game['cumulativeGoals'] = (
+    df_goals_per_game
+    .groupby(['season', 'goalieIdForShot'])['totalGameGoals']
+    .cumsum()
+    )
+    
+     
+    # Remove playoffs and empty net goals since we're calculating GAA
+    df_filtered = df_Combined.query("isPlayoffGame == 0 & goalieIdForShot != '0' & goalieIdForShot.notna() & shotWasOnGoal == 1 & season >= 2018")
+        
+   
+    # Group by 'game_id' and 'goalie_id' then sum the 'goal' column to get total goals for each goalie each game
+    df_shots_on_goal_per_game = df_filtered.groupby(['fullGameId','goalieIdForShot','season','isHomeTeam'])['shotWasOnGoal'].sum().reset_index()
+    
+    # Rename the column to make it clear that it's the total number of goals
+    df_shots_on_goal_per_game.rename(columns={'shotWasOnGoal': 'totalShotsOnGoal'}, inplace=True)
+    
+    # Create a cumulative shots on goal for each goalie in each season
+    df_shots_on_goal_per_game['cumulativeShotsOnGoal'] = (
+    df_shots_on_goal_per_game
+    .groupby(['season', 'goalieIdForShot'])['totalShotsOnGoal']
+    .cumsum()
+    )
+    
+    
+    
+    
+    df_merged = pd.merge(df_goals_per_game, df_shots_on_goal_per_game,
+                     on=['fullGameId', 'goalieIdForShot','season','isHomeTeam'], how='left')
+    
+
+    df_merged.info()
+    
+    df_merged['goalieIdSeasonSavePct'] = ((df_merged['cumulativeShotsOnGoal'] - df_merged['cumulativeGoals']) / df_merged['cumulativeShotsOnGoal'])
+    
+    
+    df_merged.to_csv('hehe.csv')
+    
+    
+    
+    
+    
     
     
     
