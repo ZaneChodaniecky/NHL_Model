@@ -120,25 +120,35 @@ def Update_Goalie_Stats(goalieHistoryPath,shotsCurrentYearPath):
     df_shots_current_year['gameId'] = df_shots_current_year['season'].astype(str) + df_shots_current_year['isPlayoffGame'].astype(str) + df_shots_current_year['game_id'].astype(str)
     df_shots_current_year['gameId'] = df_shots_current_year['gameId'].astype(int)
     
+    
+    # Rename fields to make data less confusing
+    # This is shot data, but we are looking from the goalies perspective
+    df_shots_current_year.rename(columns={'goalieIdForShot':'goalieId'}, inplace=True)
+    df_shots_current_year.rename(columns={'goalieNameForShot':'goalieName'}, inplace=True)
+    
+    
     # Remove missed shots playoff games to redce dataframe workload
     df_shots_current_year = df_shots_current_year.query("isPlayoffGame == 0 & shotWasOnGoal == 1")  
     
-    # Create goalie team column
-    df_shots_current_year['goalieTeam'] = np.where(df_shots_current_year['isHomeTeam'] == '1', df_shots_current_year['awayTeamCode'],df_shots_current_year['homeTeamCode'])
+    # Create goalie team column based on is shooter home team
+    df_shots_current_year['isGoalieTeamHome'] = np.where(df_shots_current_year['isHomeTeam'] == '1', '0','1')
+    df_shots_current_year.drop(columns=['isGoalieTeamHome'])
+
+    df_shots_current_year['goalieTeam'] = np.where(df_shots_current_year['isGoalieTeamHome'] == '1', df_shots_current_year['homeTeamCode'],df_shots_current_year['awayTeamCode'])
    
     
     # Find which goalie was in net at the end of the game, in case a goalie got pulled during the game
     # Group by 'GameId' and 'Team', then find the index of the row with the max 'Time' in each group
-    df_last_in_net = df_shots_current_year.query("shotOnEmptyNet == 0 & goalieNameForShot.notna() & season >= 2015").copy() 
+    df_last_in_net = df_shots_current_year.query("shotOnEmptyNet == 0 & goalieName.notna() & season >= 2015").copy() 
     # Ensure the index is preserved/reset if necessary
     df_last_in_net = df_last_in_net.reset_index(drop=True)
     max_time_indices = df_last_in_net.groupby(['gameId', 'goalieTeam'])['time'].idxmax()
     
     # Create a new DataFrame from the rows with the max 'Time' in each group
-    df_max_time_goalies = df_last_in_net.loc[max_time_indices, ['gameId', 'goalieTeam', 'goalieIdForShot']]
+    df_max_time_goalies = df_last_in_net.loc[max_time_indices, ['gameId', 'goalieTeam', 'goalieId']]
 
     # Merge original DataFrame with max_time_goalies on 'GameId', 'Team', and 'GoalieId'
-    df_shots_current_year = df_shots_current_year.merge(df_max_time_goalies.assign(lastGoalieInNet=1), on=['gameId', 'goalieTeam', 'goalieIdForShot'], how='left')
+    df_shots_current_year = df_shots_current_year.merge(df_max_time_goalies.assign(lastGoalieInNet=1), on=['gameId', 'goalieTeam', 'goalieId'], how='left')
 
     # Fill NaN values in 'lastGoalieInNet' with 0 for non-matching rows
     df_shots_current_year['lastGoalieInNet'] = df_shots_current_year['lastGoalieInNet'].fillna(0).astype(int) 
@@ -147,10 +157,10 @@ def Update_Goalie_Stats(goalieHistoryPath,shotsCurrentYearPath):
     ##################################### CALCULATE GAA #################################
     
     # Remove playoffs and empty net goals since we're calculating GAA
-    df_filtered = df_shots_current_year.query(f"gameId > {latest_GameID} & shotOnEmptyNet == 0 & goalieIdForShot != 0 & goalieIdForShot.notna()")
+    df_filtered = df_shots_current_year.query(f"gameId > {latest_GameID} & shotOnEmptyNet == 0 & goalieId != 0 & goalieName.notna()")
             
     # Group by 'game_id' and 'goalie_id' then sum the 'goal' column to get total goals for each game/goalie
-    df_goals_per_game = df_filtered.groupby(['gameId','goalieIdForShot','goalieNameForShot','season','goalieTeam','isHomeTeam','lastGoalieInNet'])['goal'].sum().reset_index()
+    df_goals_per_game = df_filtered.groupby(['gameId','goalieId','goalieName','season','goalieTeam','isGoalieTeamHome','lastGoalieInNet'])['goal'].sum().reset_index()
     
     # Rename the column to make it clear that it's the total number of goals
     df_goals_per_game.rename(columns={'goal': 'totalGameGoals'}, inplace=True)
@@ -159,14 +169,14 @@ def Update_Goalie_Stats(goalieHistoryPath,shotsCurrentYearPath):
     # Step 1: Create a cumulative count of games for each goalie in each season
     df_goals_per_game['cumulativeGames'] = (
     df_goals_per_game
-    .groupby(['season', 'goalieIdForShot'])
+    .groupby(['season', 'goalieId'])
     .cumcount() + 1  # +1 to start count from 1 instead of 0
     )
 
     # Step 2: Calculate the rolling average with a variable window based on cumulative games
     df_goals_per_game['goalieIdSeasonGAA'] = (
     df_goals_per_game
-    .groupby(['season', 'goalieIdForShot'])
+    .groupby(['season', 'goalieId'])
     ['totalGameGoals']
     .transform(lambda x: x.rolling(window=len(x), min_periods=1).mean())
     )
@@ -174,7 +184,7 @@ def Update_Goalie_Stats(goalieHistoryPath,shotsCurrentYearPath):
     # Step 3: Calculate the rolling average with a variable window based on cumulative games
     df_goals_per_game['goalieIdSeasonGAA'] = (
     df_goals_per_game
-    .groupby(['season', 'goalieIdForShot'])
+    .groupby(['season', 'goalieId'])
     ['totalGameGoals']
     .transform(lambda x: x.rolling(window=len(x), min_periods=1).mean())
     )
@@ -185,15 +195,15 @@ def Update_Goalie_Stats(goalieHistoryPath,shotsCurrentYearPath):
     # Using goals table, Create a cumulative count of games for each goalie in each season
     df_goals_per_game['cumulativeGoals'] = (
     df_goals_per_game
-    .groupby(['season', 'goalieIdForShot'])['totalGameGoals']
+    .groupby(['season', 'goalieId'])['totalGameGoals']
     .cumsum()
     )
       
     # Remove playoffs and empty net goals since we're calculating GAA
-    df_filtered = df_shots_current_year.query(f"gameId > {latest_GameID} & shotOnEmptyNet == 0 & goalieIdForShot != 0 & goalieIdForShot.notna()")
+    df_filtered = df_shots_current_year.query(f"gameId > {latest_GameID} & shotOnEmptyNet == 0 & goalieId != 0 & goalieName.notna()")
         
     # Group by 'game_id' and 'goalie_id' then sum the 'goal' column to get total goals for each goalie each game
-    df_shots_on_goal_per_game = df_filtered.groupby(['gameId','goalieIdForShot','goalieNameForShot','season','goalieTeam','isHomeTeam','lastGoalieInNet'])['shotWasOnGoal'].sum().reset_index()
+    df_shots_on_goal_per_game = df_filtered.groupby(['gameId','goalieId','goalieName','season','goalieTeam','isGoalieTeamHome','lastGoalieInNet'])['shotWasOnGoal'].sum().reset_index()
     
     # Rename the column to make it clear that it's the total number of goals
     df_shots_on_goal_per_game.rename(columns={'shotWasOnGoal':'totalShotsOnGoal'}, inplace=True)
@@ -201,25 +211,36 @@ def Update_Goalie_Stats(goalieHistoryPath,shotsCurrentYearPath):
     # Create a cumulative shots on goal for each goalie in each season
     df_shots_on_goal_per_game['cumulativeShotsOnGoal'] = (
     df_shots_on_goal_per_game
-    .groupby(['season', 'goalieIdForShot'])['totalShotsOnGoal']
+    .groupby(['season', 'goalieId'])['totalShotsOnGoal']
     .cumsum()
     )
     
   
     df_goalie_update = pd.merge(df_goals_per_game, df_shots_on_goal_per_game,
-                     on=['gameId', 'goalieIdForShot','goalieNameForShot','season','goalieTeam','isHomeTeam','lastGoalieInNet'], how='inner')
+                     on=['gameId', 'goalieId','goalieName','season','goalieTeam','isGoalieTeamHome','lastGoalieInNet'], how='inner')
     
     # Calculate save percentage for goalie so far for season
     df_goalie_update['goalieIdSeasonSavePct'] = ((df_goalie_update['cumulativeShotsOnGoal'] - df_goalie_update['cumulativeGoals']) / df_goalie_update['cumulativeShotsOnGoal'])
     
     
+    # Sort by 'season', 'goalie', and 'game' to ensure order
+    df_goalie_update = df_goalie_update.sort_values(by=['season', 'goalieId', 'gameId']).reset_index(drop=True)
+    # Create a column for the start of game values for goalie statistics
+    df_goalie_update['beforeGameSesaonSavePct'] = df_goalie_update.groupby(['season', 'goalieId'])['goalieIdSeasonSavePct'].shift(1).fillna(df_goalie_history['goalieIdSeasonSavePct'].mean()).astype(float)
+    df_goalie_update['beforeGameSeasonGAA'] = df_goalie_update.groupby(['season', 'goalieId'])['goalieIdSeasonGAA'].shift(1).fillna(df_goalie_history['goalieIdSeasonGAA'].mean()).astype(float)
+    
+    # NOT SURE IF THIS NEXT SECTION IS LOGICAL?
     # Some games have 2 goalies per team because the goalie was pulled. Create a field for avg GAA and Save %
-    df_goalie_update['seasonSavePctAvgForGame'] = df_goalie_update.groupby(['gameId','goalieTeam'])['goalieIdSeasonSavePct'].transform('mean')
-    df_goalie_update['seasonGAAAvgForGame'] = df_goalie_update.groupby(['gameId','goalieTeam'])['goalieIdSeasonGAA'].transform('mean')
+    #df_goalie_update['seasonSavePctAvgForGame'] = df_goalie_update.groupby(['gameId','goalieTeam'])['goalieIdSeasonSavePct'].transform('mean')
+    #df_goalie_update['seasonGAAAvgForGame'] = df_goalie_update.groupby(['gameId','goalieTeam'])['goalieIdSeasonGAA'].transform('mean')
        
     # Rename fields to match with other data files
     df_goalie_update.rename(columns={'gameId':'gameId'}, inplace=True)
     df_goalie_update.rename(columns={'goalieTeam':'team'}, inplace=True)
+    
+    # Drop fields used to calc goalie averages
+    df_goalie_update = df_goalie_update.drop(['totalGameGoals','cumulativeGames','cumulativeGoals','totalShotsOnGoal','cumulativeShotsOnGoal'],axis=1)
+    
     
     # Append new data to the history file
     df_new_goalie_history = pd.concat([df_goalie_history,df_goalie_update], ignore_index=True)
